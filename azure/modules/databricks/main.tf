@@ -1,5 +1,5 @@
 # ========================================================================================================
-# Module: Azure Databricks Workspace (Option B)
+# Module: Azure Databricks Workspace
 # Author: Andre Lima
 # Description: Main infrastructure deployment code featuring VNet Injection and Secure Cluster Connectivity.
 # ========================================================================================================
@@ -22,7 +22,7 @@ data "azurerm_subnet" "private" {
 
 # --------------------------------------------------------------------------------------------------------
 # AZURE DATABRICKS WORKSPACE WITH VNET INJECTION
-# This configures a secure enterprise Databricks workspace inside ZCAM LATAM Hub custom infrastructure
+# This configures a secure enterprise Databricks workspace inside COMPANY Hub custom infrastructure
 # --------------------------------------------------------------------------------------------------------
 resource "azurerm_databricks_workspace" "this" {
   name                        = "dbw-zcam-latam-${var.environment}"
