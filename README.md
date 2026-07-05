@@ -13,8 +13,7 @@ cloud-architecture-blueprints/
 ├── .github/workflows/   # CI/CD pipelines (Automation & Tests)
 ├── azure/               # Azure provider configurations and base modules
 │   ├── modules/         # Reusable infrastructure components (network, compute, etc.)
-│   └── README.md        # Azure-specific guidelines and naming conventions
-├── blueprints/          # End-to-end cloud architecture solutions
+│   ├── blueprints/      # End-to-end cloud architecture solutions
 │   ├── secure-landing-zone/
 │   └── web-app-three-tier/
 └── tests/               # Automated infrastructure tests (Terratest / TF Test)
