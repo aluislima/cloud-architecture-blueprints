@@ -1,0 +1,99 @@
+graph TB
+    %% Styling
+    classDef hub fill:#eff6ff,stroke:#1d4ed8,stroke-width:2px,stroke-dasharray: 5 5;
+    classDef dev fill:#f0fdf4,stroke:#16a34a,stroke-width:2px;
+    classDef prod fill:#fff7ed,stroke:#ea580c,stroke-width:2px;
+    classDef devops fill:#faf5ff,stroke:#7e22ce,stroke-width:2px;
+    classDef endpoint fill:#f1f5f9,stroke:#475569,stroke-width:1px;
+    classDef existing fill:#f8fafc,stroke:#64748b,stroke-width:2px,stroke-dasharray: 3 3;
+    classDef users fill:#fef08a,stroke:#ca8a04,stroke-width:2px;
+
+    %% User & External Layer
+    subgraph USER_ACCESS ["User Access & Consumption Layer"]
+        DE_Users["👥 15 Data Engineers<br>(Dev/Prod Access via Entra ID)"]
+        BI_Dev_Example["📊 Dev Consumption Example<br>(e.g., Power BI Dev Dashboard)"]
+        BI_Prod_Example["📊 Prod Consumption Example<br>(e.g., Enterprise Power BI Service)"]
+    end
+    class DE_Users,BI_Dev_Example,BI_Prod_Example users;
+
+    %% Azure DevOps Layer
+    subgraph DEVOPS_PLATFORM ["Existing Shared CI/CD Platform"]
+        DevOps["🚀 Azure DevOps Services<br>(Pipelines & Git Repos)"]
+        SPN["🔑 Service Principals /<br>Self-Hosted Agents"]
+        DevOps --> SPN
+    end
+    class DEVOPS_PLATFORM devops;
+
+    %% Hub VNet Layer
+    subgraph HUB_VNET ["Hub VNet (Shared Infrastructure)"]
+        Firewall["🔥 Azure Firewall (Internal Routing)"]
+        VPNGw["🌐 VPN Gateway"]
+    end
+    class HUB_VNET hub;
+
+    Office["🏢 São Paulo Office"] <===>|"IPSec VPN"| VPNGw
+
+    %% Spoke Development 
+    subgraph DEV_SUB ["Development Subscription"]
+        subgraph DEV_VNET ["Spoke VNet (Dev)"]
+            subgraph ADB_DEV ["Azure Databricks Workspace (Dev)"]
+                HostSub_Dev["🔒 Host Subnet<br>(No Public IP)"]
+                ContainerSub_Dev["🔒 Container Subnet<br>(Internal Clusters)"]
+            end
+            subgraph INT_SUBNET_DEV ["Dev Integration Subnet"]
+                PE_Raw_Dev["🔒 PE: stlatamraw-dev"]
+                PE_Cur_Dev["🔒 PE: stlatamcurated-dev"]
+                PE_Anly_Dev["🔒 PE: stlatamanalytics-dev"]
+                PE_KV_Dev["🔒 PE: Azure Key Vault (Dev)"]
+                PE_SQL_Dev["🔒 PE: To Existing Azure SQL Dev"]
+                PE_ADB_Inbound_Dev["🔒 PE: ADB Inbound Endpoint (Dev)<br>[Inbound Connector Test Example]"]
+            end
+        end
+    end
+    class DEV_SUB dev;
+    class PE_Raw_Dev,PE_Cur_Dev,PE_Anly_Dev,PE_KV_Dev,PE_SQL_Dev,PE_ADB_Inbound_Dev endpoint;
+
+    %% Spoke Production
+    subgraph PROD_SUB ["Production Subscription"]
+        subgraph PROD_VNET ["Spoke VNet (Prod)"]
+            subgraph ADB_PROD ["Azure Databricks Workspace (Prod)"]
+                HostSub_Prod["🔒 Host Subnet<br>(No Public IP)"]
+                ContainerSub_Prod["🔒 Container Subnet<br>(Internal Clusters)"]
+            end
+            subgraph INT_SUBNET_PROD ["Prod Integration Subnet"]
+                PE_Raw_Prod["🔒 PE: stlatamraw-prod"]
+                PE_Cur_Prod["🔒 PE: stlatamcurated-prod (PII)"]
+                PE_Anly_Prod["🔒 PE: stlatamanalytics-prod"]
+                PE_KV_Prod["🔒 PE: Azure Key Vault (Prod)"]
+                PE_SQL_Prod["🔒 PE: To Existing Azure SQL Prod"]
+                PE_ADB_Inbound_Prod["🔒 PE: ADB Inbound Endpoint (Prod)<br>[Inbound Enterprise Connector Example]"]
+            end
+        end
+    end
+    class PROD_SUB prod;
+    class PE_Raw_Prod,PE_Cur_Prod,PE_Anly_Prod,PE_KV_Prod,PE_SQL_Prod,PE_ADB_Inbound_Prod endpoint;
+
+    %% Existing Shared Databases
+    subgraph EXTERNAL_RESOURCES ["Pre-existing Corporate Data Layer"]
+        SQL_Dev["🛢️ Azure SQL DB (Dev)"]
+        SQL_Prod["🛢️ Azure SQL DB (Prod)"]
+    end
+    class SQL_Dev,SQL_Prod existing;
+
+    %% User & Consumption Flows
+    DE_Users ===>|"Entra ID SSO"| ADB_DEV
+    DE_Users ===>|"Entra ID SSO"| ADB_PROD
+    
+    %% Inbound Examples (Symmetric Private Link Flow)
+    BI_Dev_Example ==>|"Example: Private Connection<br>(JDBC/ODBC/BI)"| PE_ADB_Inbound_Dev
+    BI_Prod_Example ==>|"Example: Private Connection<br>(JDBC/ODBC/BI)"| PE_ADB_Inbound_Prod
+
+    PE_ADB_Inbound_Dev ==> HostSub_Dev
+    PE_ADB_Inbound_Prod ==> HostSub_Prod
+
+    PE_SQL_Dev ===> SQL_Dev
+    PE_SQL_Prod ===> SQL_Prod
+    SPN ===>|"Deploys Dev Network"| DEV_VNET
+    SPN ===>|"Deploys Prod Network"| PROD_VNET
+    DEV_VNET <==>|"VNet Peering"| HUB_VNET
+    PROD_VNET <==>|"VNet Peering"| HUB_VNET
